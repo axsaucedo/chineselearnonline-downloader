@@ -1,5 +1,6 @@
 
 from urllib.request import urlretrieve
+from urllib.error import HTTPError
 import sys, os, shutil
 
 FOLDER="download"
@@ -25,6 +26,15 @@ def url_traditional(name):
 def url_english(name):
     return f"https://www.chineselearnonline.com/premium/CLO_{name}_Comp_E.pdf"
 
+def save_or_404(url, file):
+    try:
+        urlretrieve(url, file, reporthook)
+    except HTTPError as err:
+        if err.code == 404:
+            print("Skpping - 404 Not Found: " + str(url))
+        else:
+            raise
+
 def reporthook(blocknum, blocksize, totalsize):
     readsofar = blocknum * blocksize
     if totalsize > 0:
@@ -38,7 +48,7 @@ def reporthook(blocknum, blocksize, totalsize):
         sys.stderr.write("read %d\n" % (readsofar,))
 
 def start_previous_to_last():
-    files = os.listdir("FOLDER")
+    files = os.listdir(FOLDER)
     numbers = [n for n in files if n.isdigit()]
 
     if not numbers:
@@ -49,7 +59,7 @@ def start_previous_to_last():
     foldername = str(latest).zfill(3)
 
     # Remove the latest one as it may be incomplete / corrupted
-    shutil.rmtree(foldername)
+    shutil.rmtree(f"{FOLDER}/{foldername}")
 
     return latest
 
@@ -67,9 +77,9 @@ def download_audio(num, base):
 
     BASE_FILE_URL_V=""
 
-    urlretrieve(url, f"{folder_name}/{name}{AUDIO_EXT}", reporthook)
+    urlretrieve(url, f"{base}/{name}{AUDIO_EXT}", reporthook)
 
-def download_files(num, folder_name):
+def download_files(num, base):
 
     name = str(num).zfill(3)
     print(f"Downloading {name} files")
@@ -79,11 +89,11 @@ def download_files(num, folder_name):
     t = url_traditional(name)
     e = url_english(name)
 
-    urlretrieve(v, f"{folder_name}/{name}_Vocab{FILE_EXT}", reporthook)
-    urlretrieve(p, f"{folder_name}/{name}_Pinyin{FILE_EXT}", reporthook)
-    urlretrieve(s, f"{folder_name}/{name}_Simplified{FILE_EXT}", reporthook)
-    urlretrieve(t, f"{folder_name}/{name}_Traditional{FILE_EXT}", reporthook)
-    urlretrieve(e, f"{folder_name}/{name}_English{FILE_EXT}", reporthook)
+    save_or_404(v, f"{base}/{name}_Vocab{FILE_EXT}")
+    save_or_404(p, f"{base}/{name}_Pinyin{FILE_EXT}")
+    save_or_404(s, f"{base}/{name}_Simplified{FILE_EXT}")
+    save_or_404(t, f"{base}/{name}_Traditional{FILE_EXT}")
+    save_or_404(e, f"{base}/{name}_English{FILE_EXT}")
 
 if __name__ == "__main__":
 
@@ -93,8 +103,10 @@ if __name__ == "__main__":
     print(f"Starting from {start}")
 
     for i in range(start, TOTAL_LESSONS + 1):
-        fname = str(num).zfill(3)
+        fname = str(i).zfill(3)
         base_folder = f"{FOLDER}/{fname}"
+
+        create_folder_if_not_exists(base_folder)
 
         download_audio(i, base_folder)
         download_files(i, base_folder)
