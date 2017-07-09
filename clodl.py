@@ -44,7 +44,7 @@ def reporthook(blocknum, blocksize, totalsize):
         if readsofar >= totalsize: # near the end
             sys.stderr.write("\n")
     else: # total size is unknown
-        sys.stderr.write("read %d\n" % (readsofar,))
+        sys.stderr.write("read {readsofar}\n")
 
 def start_previous_to_last():
     files = os.listdir(FOLDER)
