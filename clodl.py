@@ -39,8 +39,7 @@ def reporthook(blocknum, blocksize, totalsize):
     readsofar = blocknum * blocksize
     if totalsize > 0:
         percent = readsofar * 1e2 / totalsize
-        s = "\r%5.1f%% %*d / %d" % (
-            percent, len(str(totalsize)), readsofar, totalsize)
+        s = f"\r{round(percent,1)}% {readsofar} / {totalsize}"
         sys.stderr.write(s)
         if readsofar >= totalsize: # near the end
             sys.stderr.write("\n")
